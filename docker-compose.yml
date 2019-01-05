@@ -1,0 +1,45 @@
+version: '3'
+volumes: 
+    micky_data:
+services:
+  mickyapp:
+    image: "micky-svr"
+    ports:
+        - "8082:8081" # webserver_port
+        - "1323:1323"
+    volumes: 
+        - ./src:/app
+    depends_on:
+        - 'mongo_micky'
+    links:
+        - 'mongo_micky'
+    depends_on:
+        - mongo_micky
+  mongo_micky:
+    image: 'mongo:latest'
+    volumes:
+        - micky_data:/data/db
+    environment:
+        MONGO_INITDB_ROOT_USERNAME: micky
+        MONGO_INITDB_ROOT_PASSWORD: k8kwQ8f4A2fjZk3QhyebekRYKK
+    container_name: 'mongo_micky'
+    ports:
+        - '27022:27017'
+  backup-db:
+    image: alpine
+    stdin_open: true
+    tty: true
+    logging:
+        driver: none
+    volumes:
+        - micky_data:/volume/data
+    command: ["tar", "-C", "/volume/data", "--exclude='logs/*'", "-cjf", "-", "./"]
+    container_name: micky_data_backup
+  restore-db:
+    image: alpine
+    stdin_open: true
+    tty: true
+    volumes:
+        - micky_data:/volume/data
+    command: ["tar", "-C", "/volume/data", "-xj"]
+    container_name: micky_data_backup
