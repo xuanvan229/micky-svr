@@ -38,13 +38,18 @@ func Register(w http.ResponseWriter, r *http.Request){
 		newUser.Password = hashPassword
 
 		err = user.Insert(newUser)
-			if err != nil {
-				// return c.String(http.StatusInternalServerError, "false")
-			}
+		
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+			// return c.String(http.StatusInternalServerError, "false")
+		}
+		
 		response := map[string]string{"status":"ok"}
 		js, _ := json.Marshal(response)
 		
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
 		w.Write(js)
 		// return c.String(http.StatusOK, "Welcome "+username+"!")
 }
