@@ -5,7 +5,6 @@ import (
 	"io"
 	"github.com/gorilla/mux"
 	"fmt"
-	"micky-svr/db"
 	"micky-svr/user"
 	// "encoding/json"
 	"log"
@@ -27,35 +26,6 @@ func loggingMiddleware(next http.Handler) http.Handler {
     })
 }
 
-func login(w http.ResponseWriter, r *http.Request) {
-	
-	fmt.Println("get request")
-	if err := r.ParseForm(); err != nil {
-		fmt.Fprintf(w, "ParseForm() err: %v", err)
-		return
-	}
-
-	user, err := db.ConnectToCol("blossom_user")
-		if err != nil {
-			fmt.Println(err)
-			// return c.String(http.StatusInternalServerError, "false")
-	}
-	
-	username := r.FormValue("username")
-	password := r.FormValue("password")
-
-	newUser := new(Login)
-	newUser.Username = username
-	newUser.Password = password
-
-	err = user.Insert(newUser)
-	if err != nil {
-		fmt.Println(err)
-		// return c.String(http.StatusInternalServerError, "false")
-	}
-	fmt.Println(username)
-	fmt.Println(password)
-}
 
 
 func main() {
@@ -65,7 +35,7 @@ func main() {
 	r := mux.NewRouter()
 	// Routes consist of a path and a handler function.
 	r.HandleFunc("/hi", helloHandler)
-	r.HandleFunc("/login", login).Methods("POST")
+	r.HandleFunc("/login", user.Login).Methods("POST")
 	r.HandleFunc("/resgister", user.Register).Methods("POST")
 	p := r.PathPrefix("/admin/").Subrouter()
 	p.Use(loggingMiddleware)

@@ -10,21 +10,32 @@ services:
     volumes: 
         - ./src:/app
     depends_on:
-        - 'mongo_micky'
+        - 'posgres_micky'
     links:
-        - 'mongo_micky'
+        - 'posgres_micky'
     depends_on:
-        - mongo_micky
-  mongo_micky:
-    image: 'mongo:latest'
-    volumes:
-        - micky_data:/data/db
+        - posgres_micky
+  posgres_micky: 
+    image: 'postgres:11'
+    restart: always
     environment:
-        MONGO_INITDB_ROOT_USERNAME: micky
-        MONGO_INITDB_ROOT_PASSWORD: k8kwQ8f4A2fjZk3QhyebekRYKK
-    container_name: 'mongo_micky'
+        - POSTGRES_PASSWORD=k8kwQ8f4A2fjZk3QhyebekRYKK
+        - POSTGRES_DB=micky
+    volumes: 
+        - micky_data:/var/lib/postgresql/data
     ports:
-        - '27022:27017'
+        - 5432:5432
+    container_name: postgres
+#   mongo_micky:
+#     image: 'mongo:latest'
+#     volumes:
+#         - micky_data:/data/db
+#     environment:
+#         MONGO_INITDB_ROOT_USERNAME: micky
+#         MONGO_INITDB_ROOT_PASSWORD: k8kwQ8f4A2fjZk3QhyebekRYKK
+#     container_name: 'mongo_micky'
+#     ports:
+#         - '27022:27017'
   backup-db:
     image: alpine
     stdin_open: true
@@ -32,14 +43,14 @@ services:
     logging:
         driver: none
     volumes:
-        - micky_data:/volume/data
-    command: ["tar", "-C", "/volume/data", "--exclude='logs/*'", "-cjf", "-", "./"]
+        - micky_data:/var/lib/postgresql/data
+    command: ["tar", "-C", "/var/lib/postgresql/data", "--exclude='logs/*'", "-cjf", "-", "./"]
     container_name: micky_data_backup
   restore-db:
     image: alpine
     stdin_open: true
     tty: true
     volumes:
-        - micky_data:/volume/data
-    command: ["tar", "-C", "/volume/data", "-xj"]
+        - micky_data:/var/lib/postgresql/data
+    command: ["tar", "-C", "/var/lib/postgresql/data", "-xj"]
     container_name: micky_data_backup

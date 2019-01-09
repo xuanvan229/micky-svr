@@ -3,7 +3,7 @@ build:
 	docker build -t micky-svr .
 
 up:
-	docker-compose up --abort-on-container-exit --remove-orphans mickyapp mongo_micky
+	docker-compose up --abort-on-container-exit --remove-orphans mickyapp posgres_micky
 
 backup-db:
 	docker-compose -f docker-compose.yml run --rm -T backup-db | pv > backup.tar.bz2
