@@ -6,21 +6,27 @@ import (
 	"fmt"
 	"time"
 	"micky-svr/db"
-	"gopkg.in/mgo.v2/bson"
+	// "gopkg.in/mgo.v2/bson"
 	"github.com/dgrijalva/jwt-go"
 	"log"
 	"encoding/json"
+	"database/sql"
+	_ "github.com/lib/pq"
+	"context"
 )
+
+var ctx = context.Background()
 
 type JwtCustomClaims struct {
 	Name  string `json:"name"`
-	Admin bool   `json:"admin"`
+	Pass string   `json:"pass"`
 	jwt.StandardClaims
 }
 
 type User struct {
+	Id int `json : "id"  xml: "id" form: "id" query: "id"`
 	Username    string `json : "username"  xml: "username" form: "username" query: "username"`
-	Password string `json : "password" xml: "password" form: "password" query: "password"`
+	Pass string `json : "pass" xml: "pass" form: "pass" query: "pass"`
 }
 
 func HashAndSalt(pwd []byte) string {
@@ -53,25 +59,50 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	username := r.FormValue("username")
 	password := r.FormValue("password")
-	user, err := db.ConnectToCol("micky_user")
-		if err != nil {
-			fmt.Println(err)
-	}
-	result := new(User)
-	err = user.Find(bson.M{"username": username}).One(&result)
+	db, err := sql.Open("postgres", db.DbInfo())
+	
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		panic(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
-	if comparePasswords(result.Password, []byte(password)) {
+	
+	defer db.Close()
+	sqlQuery := `SELECT * FROM mk_user WHERE username=$1 LIMIT 1;`
+
+	row := db.QueryRowContext(ctx, sqlQuery, username)
+	
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("run login")
+
+	fmt.Println(row)
+	
+	user := User{}
+	err = row.Scan(
+		&user.Id,
+		&user.Username,
+		&user.Pass,
+	)
+
+	if err != nil {
+		fmt.Println("get err")
+		w.WriteHeader(http.StatusInternalServerError)
+		return 
+	}
+
+	if comparePasswords(user.Pass, []byte(password)) {
 		fmt.Println("true")
 		claims := &JwtCustomClaims{
-			username,
-			true,
+			user.Username,
+			user.Pass,
 			jwt.StandardClaims{
 				ExpiresAt: time.Now().Add(time.Hour * 72).Unix(),
 			},
 		}
+
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 		t, err := token.SignedString([]byte("secret"))
@@ -98,11 +129,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 
 func Register(w http.ResponseWriter, r *http.Request){
-		user, err := db.ConnectToCol("micky_user")
-		if err != nil {
-			// return c.String(http.StatusInternalServerError, "false")
-		}
-
 		username := r.FormValue("username")
 		password := r.FormValue("password")
 
@@ -110,16 +136,29 @@ func Register(w http.ResponseWriter, r *http.Request){
 
 		newUser := new(User)
 		newUser.Username = username
-		newUser.Password = hashPassword
-
-		err = user.Insert(newUser)
+		newUser.Pass = hashPassword
 		
+		db, err := sql.Open("postgres", db.DbInfo())
 		if err != nil {
+			panic(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
-			// return c.String(http.StatusInternalServerError, "false")
 		}
 		
+		defer db.Close()
+
+		sqlQuery := `
+		INSERT INTO mk_user (username, pass)
+		VALUES ($1, $2);`
+
+		_ , err = db.Exec(sqlQuery, newUser.Username, newUser.Pass)
+
+		if err != nil {
+			panic(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 		response := map[string]string{"status":"ok"}
 		js, _ := json.Marshal(response)
 		
