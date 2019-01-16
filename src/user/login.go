@@ -109,6 +109,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Println("hello")
 		}
+		
+		expire := time.Now()
+		cookie := http.Cookie{Name: "_token", Value: t, Path: "/", Expires: expire, MaxAge: 3600}
+		http.SetCookie(w, &cookie)
 
 		response := map[string]string{"status":t}
 		js, _ := json.Marshal(response)

@@ -11,3 +11,8 @@ backup-db:
 
 restore_db:
 	cat backup.tar.bz2 | pv | docker-compose -f docker-compose.yml run --rm -T restore-db
+
+
+clean:
+	docker-compose stop
+	docker-compose rm -f
