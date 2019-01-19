@@ -63,9 +63,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	db, err := sql.Open("postgres", db.DbInfo())
 
-	fmt.Println("username", username)
-	fmt.Println("password", password)
-
 	if err != nil {
 		panic(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -165,24 +162,65 @@ func Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func Check(w http.ResponseWriter, r *http.Request) {
-	cookie, _ := r.Cookie("_token")
-	user := JwtCustomClaims{}
-	_, err := jwt.ParseWithClaims(cookie.Value, &user, func(token *jwt.Token) (interface{}, error) {
+	cookie, err := r.Cookie("_token")
+	if err != nil {
+		//panic(err)
+		response := map[string]string{"status": "no token"}
+		js, _ := json.Marshal(response)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		w.Write(js)
+		return
+	}
+	userToken := JwtCustomClaims{}
+	_, err = jwt.ParseWithClaims(cookie.Value, &userToken, func(token *jwt.Token) (interface{}, error) {
 		return []byte("secret"), nil
 	})
 	if err != nil {
 		panic(err)
+		response := map[string]string{"status": "false"}
+		js, _ := json.Marshal(response)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		w.Write(js)
+		return
 	}
 	fmt.Println(cookie.Value)
-	fmt.Println("value decode,", user.Name, user.Pass)
-	response := map[string]string{"status": "ok"}
-	js, _ := json.Marshal(response)
+	fmt.Println("value decode,", userToken.Name, userToken.Pass)
 
+	db, err := sql.Open("postgres", db.DbInfo())
+
+	if err != nil {
+		panic(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	defer db.Close()
+	sqlQuery := `SELECT * FROM mk_user WHERE username=$1 LIMIT 1;`
+
+	row := db.QueryRowContext(ctx, sqlQuery, userToken.Name)
+
+	user := User{}
+	err = row.Scan(
+		&user.Id,
+		&user.Username,
+		&user.Pass,
+	)
+
+	if user.Username == userToken.Name && user.Pass == userToken.Pass {
+		response := map[string]string{"status": "ok"}
+		js, _ := json.Marshal(response)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(js)
+		return
+	}
+
+	response := map[string]string{"status": "false"}
+	js, _ := json.Marshal(response)
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusForbidden)
 	w.Write(js)
 	return
-	//token := cookie.(*jwt.Token)
-	//claims := token.Claims.(*JwtCustomClaims)
-	//name := claims.Name
 }
