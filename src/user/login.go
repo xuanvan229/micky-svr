@@ -100,7 +100,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		}
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
 		t, err := token.SignedString([]byte("secret"))
 
 		if err != nil {
@@ -167,7 +166,22 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 func Check(w http.ResponseWriter, r *http.Request) {
 	cookie, _ := r.Cookie("_token")
-	fmt.Println(cookie)
+	user := JwtCustomClaims{}
+	_, err := jwt.ParseWithClaims(cookie.Value, &user, func(token *jwt.Token) (interface{}, error) {
+		return []byte("secret"), nil
+	})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(cookie.Value)
+	fmt.Println("value decode,", user.Name, user.Pass)
+	response := map[string]string{"status": "ok"}
+	js, _ := json.Marshal(response)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(js)
+	return
 	//token := cookie.(*jwt.Token)
 	//claims := token.Claims.(*JwtCustomClaims)
 	//name := claims.Name
