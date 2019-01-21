@@ -1,6 +1,9 @@
 package helper
 
-import "net/http"
+import (
+	"encoding/json"
+	"net/http"
+)
 
 func SimpleLog(err error) {
 	if err != nil {
@@ -15,4 +18,13 @@ func Log(err error, w http.ResponseWriter) http.ResponseWriter {
 	}
 	w.WriteHeader(http.StatusInternalServerError)
 	return w
+}
+
+func FailRequest(w *http.ResponseWriter, message string, status int) {
+	response := map[string]string{"message": message}
+	js, _ := json.Marshal(response)
+	(*w).Header().Set("Content-Type", "application/json")
+	(*w).WriteHeader(status)
+	(*w).Write(js)
+	//(*w).Header().Set("Access-Control-Allow-Origin", "*")
 }

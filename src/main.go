@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"io"
+	"micky-svr/middleware"
 	"micky-svr/user"
 	"net/http"
 	// "encoding/json"
@@ -38,11 +39,12 @@ func main() {
 	api.HandleFunc("/login", user.Login).Methods("POST")
 	api.HandleFunc("/resgister", user.Register).Methods("POST")
 	api.HandleFunc("/check", user.Check).Methods("GET")
+
 	p := api.PathPrefix("/admin/").Subrouter()
-	p.Use(loggingMiddleware)
+	p.Use(middleware.LoggingMiddleware)
 	p.HandleFunc("/", helloHandler)
 	p.HandleFunc("/hello", helloHandler)
-
+	//p.HandleFunc("/post", )
 	fmt.Println("Sever run at :1323")
 	if err := http.ListenAndServe(":1323", r); err != nil {
 		panic(err)

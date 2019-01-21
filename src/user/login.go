@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
 	"micky-svr/db"
+	"micky-svr/helper"
 	"net/http"
 	"time"
 	// "gopkg.in/mgo.v2/bson"
@@ -163,30 +164,28 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 func Check(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("_token")
+
 	if err != nil {
 		//panic(err)
-		response := map[string]string{"status": "no token"}
-		js, _ := json.Marshal(response)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusForbidden)
-		w.Write(js)
+		helper.FailRequest(&w, "no token", http.StatusForbidden)
+		//response := map[string]string{"status": "no token"}
+		//js, _ := json.Marshal(response)
+		//w.Header().Set("Content-Type", "application/json")
+		//w.WriteHeader(http.StatusForbidden)
+		//w.Write(js)
 		return
 	}
+
 	userToken := JwtCustomClaims{}
 	_, err = jwt.ParseWithClaims(cookie.Value, &userToken, func(token *jwt.Token) (interface{}, error) {
 		return []byte("secret"), nil
 	})
+
 	if err != nil {
 		panic(err)
-		response := map[string]string{"status": "false"}
-		js, _ := json.Marshal(response)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusForbidden)
-		w.Write(js)
+		helper.FailRequest(&w, "false", http.StatusForbidden)
 		return
 	}
-	fmt.Println(cookie.Value)
-	fmt.Println("value decode,", userToken.Name, userToken.Pass)
 
 	db, err := sql.Open("postgres", db.DbInfo())
 
@@ -216,11 +215,6 @@ func Check(w http.ResponseWriter, r *http.Request) {
 		w.Write(js)
 		return
 	}
-
-	response := map[string]string{"status": "false"}
-	js, _ := json.Marshal(response)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusForbidden)
-	w.Write(js)
+	helper.FailRequest(&w, "false", http.StatusForbidden)
 	return
 }
