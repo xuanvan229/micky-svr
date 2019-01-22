@@ -25,9 +25,9 @@ type JwtCustomClaims struct {
 }
 
 type User struct {
-	Id       int    `json : "id"  xml: "id" form: "id" query: "id"`
-	Username string `json : "username"  xml: "username" form: "username" query: "username"`
-	Pass     string `json : "pass" xml: "pass" form: "pass" query: "pass"`
+	Id       int    `json:"id"  xml:"id" form:"id" query:"id"`
+	Username string `json:"username"  xml:"username" form:"username" query:"username"`
+	Pass     string `json:"pass" xml:"pass" form:"pass" query:"pass"`
 }
 
 func HashAndSalt(pwd []byte) string {

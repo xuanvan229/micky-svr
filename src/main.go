@@ -6,6 +6,7 @@ import (
 	"io"
 	"micky-svr/middleware"
 	"micky-svr/user"
+	"micky-svr/cms_post"
 	"net/http"
 	// "encoding/json"
 	"log"
@@ -44,7 +45,7 @@ func main() {
 	p.Use(middleware.LoggingMiddleware)
 	p.HandleFunc("/", helloHandler)
 	p.HandleFunc("/hello", helloHandler)
-	//p.HandleFunc("/post", )
+	p.HandleFunc("/post",cms_post.GetPost)
 	fmt.Println("Sever run at :1323")
 	if err := http.ListenAndServe(":1323", r); err != nil {
 		panic(err)
