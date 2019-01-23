@@ -16,3 +16,6 @@ restore_db:
 clean:
 	docker-compose stop
 	docker-compose rm -f
+
+backup:
+	pg_dump -d 'micky' -U 'postgres' -h 'localhost' -W  > db.sql

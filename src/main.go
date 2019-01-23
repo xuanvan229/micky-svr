@@ -46,6 +46,7 @@ func main() {
 	p.HandleFunc("/", helloHandler)
 	p.HandleFunc("/hello", helloHandler)
 	p.HandleFunc("/post",cms_post.GetPost)
+	p.HandleFunc("/post/{id}", cms_post.SinglePost)
 	fmt.Println("Sever run at :1323")
 	if err := http.ListenAndServe(":1323", r); err != nil {
 		panic(err)

@@ -21,11 +21,11 @@ func Log(err error, w http.ResponseWriter) http.ResponseWriter {
 }
 
 func FailRequest(w *http.ResponseWriter, message string, status int) {
-	response := map[string]string{"message": message}
-	js, _ := json.Marshal(response)
-	(*w).Header().Set("Content-Type", "application/json")
-	(*w).WriteHeader(status)
-	(*w).Write(js)
+		response := map[string]string{"message": message}
+		js, _ := json.Marshal(response)
+		(*w).Header().Set("Content-Type", "application/json")
+		(*w).WriteHeader(status)
+		(*w).Write(js)
 	//(*w).Header().Set("Access-Control-Allow-Origin", "*")
 }
 

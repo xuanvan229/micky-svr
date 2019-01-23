@@ -150,8 +150,10 @@ ALTER TABLE ONLY public.mk_user ALTER COLUMN id SET DEFAULT nextval('public.mk_u
 --
 
 COPY public.mk_post (id, title, description) FROM stdin;
-1	title 1	description 1
-2	title 1	description 2
+3	title 1	description 2
+5	title 2	description 2
+6	title 3	description 2
+7	title 4	description 2
 \.
 
 
@@ -160,6 +162,7 @@ COPY public.mk_post (id, title, description) FROM stdin;
 --
 
 COPY public.mk_session (id, content, post_id) FROM stdin;
+1	simple content	7
 \.
 
 
@@ -178,7 +181,7 @@ COPY public.mk_user (id, username, pass) FROM stdin;
 -- Name: mk_session_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.mk_session_id_seq', 1, false);
+SELECT pg_catalog.setval('public.mk_session_id_seq', 1, true);
 
 
 --
@@ -192,7 +195,15 @@ SELECT pg_catalog.setval('public.mk_user_id_seq', 8, true);
 -- Name: post_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.post_id_seq', 2, true);
+SELECT pg_catalog.setval('public.post_id_seq', 7, true);
+
+
+--
+-- Name: mk_post mk_post_title_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.mk_post
+    ADD CONSTRAINT mk_post_title_key UNIQUE (title);
 
 
 --

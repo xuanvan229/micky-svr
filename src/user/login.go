@@ -107,10 +107,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		expire := time.Now()
 		cookie := http.Cookie{Name: "_token", Value: t, Path: "/", Expires: expire, MaxAge: 3600}
 		http.SetCookie(w, &cookie)
-
 		response := map[string]string{"status": "ok"}
 		js, _ := json.Marshal(response)
-		helper.WriteResponse(&w, js)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(js)
 		return
 	}
 	response := map[string]string{"status": "false"}
