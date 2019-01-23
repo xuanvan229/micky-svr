@@ -19,3 +19,6 @@ clean:
 
 backup:
 	pg_dump -d 'micky' -U 'postgres' -h 'localhost' -W  > db.sql
+
+restore:
+	pg_restore -h localhost -p 5432 -U 'postgres' -d 'micky' -1 -W db.sql

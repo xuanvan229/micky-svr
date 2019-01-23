@@ -150,10 +150,11 @@ ALTER TABLE ONLY public.mk_user ALTER COLUMN id SET DEFAULT nextval('public.mk_u
 --
 
 COPY public.mk_post (id, title, description) FROM stdin;
-3	title 1	description 2
-5	title 2	description 2
-6	title 3	description 2
-7	title 4	description 2
+8	title 1	hongxuan123
+9	hongxuan123	new des
+10	hongxuan	new des
+12	hongxuan1	new des
+13	hongxuan12	new des
 \.
 
 
@@ -162,7 +163,15 @@ COPY public.mk_post (id, title, description) FROM stdin;
 --
 
 COPY public.mk_session (id, content, post_id) FROM stdin;
-1	simple content	7
+2	the data of page	8
+3	content 1	9
+4	content 2	9
+5	content 1	10
+6	content 2	10
+7	content 1	12
+8	content 2	12
+9	content 1	13
+10	content 2	13
 \.
 
 
@@ -171,9 +180,7 @@ COPY public.mk_session (id, content, post_id) FROM stdin;
 --
 
 COPY public.mk_user (id, username, pass) FROM stdin;
-5	xuan	$2a$04$kOdxaaWQAMwmGL4W7CaVJOtsJkSqDQXnFsaFj7cMdJb4iLFuosH.2
-7	hongxuan	$2a$04$IDRBs7EC.1NnylfRiqthW.U20HcD0hJIhyI.DJ8/7V/LIpmPktJa2
-8	hongxuan123	$2a$04$CHII3zusOT72VhqaRVXHSeVZdGQffud0yLnyqXIbx2ougS/JnGiHu
+9	xuan	$2a$04$ZGH6eJHnGnFMxFh1dCsfquF5uqANF0SI.tARc8l4oZMOTct1h8Urm
 \.
 
 
@@ -181,21 +188,21 @@ COPY public.mk_user (id, username, pass) FROM stdin;
 -- Name: mk_session_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.mk_session_id_seq', 1, true);
+SELECT pg_catalog.setval('public.mk_session_id_seq', 10, true);
 
 
 --
 -- Name: mk_user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.mk_user_id_seq', 8, true);
+SELECT pg_catalog.setval('public.mk_user_id_seq', 9, true);
 
 
 --
 -- Name: post_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.post_id_seq', 7, true);
+SELECT pg_catalog.setval('public.post_id_seq', 13, true);
 
 
 --

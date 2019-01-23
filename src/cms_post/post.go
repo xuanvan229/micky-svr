@@ -3,9 +3,8 @@ package cms_post
 import (
 	"context"
 	"database/sql"
-	//"fmt"
-
-	//"fmt"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"micky-svr/db"
 	"micky-svr/helper"
@@ -28,11 +27,26 @@ type Session struct {
 }
 var ctx = context.Background()
 
+func CheckJson(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+
+	if err != nil {
+		panic(err)
+	}
+
+	newPost := Post{}
+	err = json.Unmarshal(body, &newPost)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(newPost)
+}
+
+
+
 func GetPost(w http.ResponseWriter, r *http.Request){
 	if r.Method == "GET" {
 		db, err := sql.Open("postgres", db.DbInfo())
-
-
 		if err != nil {
 			panic(err)
 			helper.FailRequest(&w, "false", http.StatusForbidden)
@@ -42,7 +56,6 @@ func GetPost(w http.ResponseWriter, r *http.Request){
 		sqlQuery := `SELECT * FROM mk_post;`
 
 		postRows, err := db.QueryContext(ctx, sqlQuery)
-
 		if err != nil {
 			panic(err)
 			helper.FailRequest(&w, "false", http.StatusInternalServerError)
@@ -60,7 +73,6 @@ func GetPost(w http.ResponseWriter, r *http.Request){
 
 			sqlQuerySession := `SELECT * FROM mk_session WHERE post_id=$1;`
 			sessionRows, err := db.QueryContext(ctx, sqlQuerySession, post.Id)
-
 			if err != nil {
 				panic(err)
 				helper.FailRequest(&w,"false", http.StatusInternalServerError)
@@ -68,7 +80,6 @@ func GetPost(w http.ResponseWriter, r *http.Request){
 			}
 
 			sessions := []Session{}
-
 			for sessionRows.Next() {
 				session := Session{}
 				err = sessionRows.Scan(
@@ -90,13 +101,16 @@ func GetPost(w http.ResponseWriter, r *http.Request){
 		return
 
 	} else if r.Method == "POST" {
-		if err := r.ParseForm(); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			panic(err)
 		}
-		title := r.FormValue("title")
-		description := r.FormValue("description")
-		content := r.FormValue("content")
+		fmt.Println("run code inside")
+		newPost := Post{}
+		err = json.Unmarshal(body, &newPost)
+		if err != nil {
+			panic(err)
+		}
 
 		db, err := sql.Open("postgres", db.DbInfo())
 
@@ -109,7 +123,7 @@ func GetPost(w http.ResponseWriter, r *http.Request){
 		defer db.Close()
 
 		sqlQuery := `INSERT INTO mk_post (title, description) VALUES ($1, $2);`
-		_, err = db.Exec(sqlQuery, title, description)
+		_, err = db.Exec(sqlQuery, newPost.Title, newPost.Description)
 
 		if err != nil {
 			panic(err)
@@ -118,7 +132,7 @@ func GetPost(w http.ResponseWriter, r *http.Request){
 		}
 
 		sqlQueryPost := `SELECT id FROM mk_post WHERE title=$1 AND description=$2 LIMIT 1;`
-		row := db.QueryRowContext(ctx, sqlQueryPost, title, description)
+		row := db.QueryRowContext(ctx, sqlQueryPost, newPost.Title, newPost.Description)
 
 		var id string
 		err = row.Scan(
@@ -130,15 +144,20 @@ func GetPost(w http.ResponseWriter, r *http.Request){
 			helper.FailRequest(&w, "false", http.StatusInternalServerError)
 			return
 		}
-
 		sqlInsert := `INSERT INTO mk_session (content, post_id) VALUES ($1, $2);`
-		_, err = db.Exec(sqlInsert, content, id)
 
-		if err != nil {
-			panic(err)
-			helper.FailRequest(&w, "false", http.StatusInternalServerError)
-			return
+		if len(newPost.Session) > 0{
+			for _, session := range newPost.Session {
+				_, err = db.Exec(sqlInsert, session.Content, id)
+				if err != nil {
+					panic(err)
+					helper.FailRequest(&w, "false", http.StatusInternalServerError)
+					return
+				}
+			}
 		}
+
+
 		response := map[string]string{"status": "ok"}
 		js, _ := json.Marshal(response)
 		helper.WriteResponse(&w, js)

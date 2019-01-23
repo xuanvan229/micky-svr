@@ -40,7 +40,7 @@ func main() {
 	api.HandleFunc("/login", user.Login).Methods("POST")
 	api.HandleFunc("/resgister", user.Register).Methods("POST")
 	api.HandleFunc("/check", user.Check).Methods("GET")
-
+	api.HandleFunc("/checkjson", cms_post.CheckJson).Methods("POST")
 	p := api.PathPrefix("/admin/").Subrouter()
 	p.Use(middleware.LoggingMiddleware)
 	p.HandleFunc("/", helloHandler)

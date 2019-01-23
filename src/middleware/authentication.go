@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"micky-svr/db"
 	"micky-svr/helper"
@@ -15,6 +16,7 @@ var ctx = context.Background()
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Do stuff here
+		fmt.Println(r.URL)
 		cookie, err := r.Cookie("_token")
 
 		if err != nil {
