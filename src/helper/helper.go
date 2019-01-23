@@ -28,3 +28,9 @@ func FailRequest(w *http.ResponseWriter, message string, status int) {
 	(*w).Write(js)
 	//(*w).Header().Set("Access-Control-Allow-Origin", "*")
 }
+
+func WriteResponse(w *http.ResponseWriter, data []byte) {
+	(*w).Header().Set("Content-Type", "application/json")
+	(*w).WriteHeader(http.StatusOK)
+	(*w).Write(data)
+}

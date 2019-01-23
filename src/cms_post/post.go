@@ -6,15 +6,23 @@ import (
 	"fmt"
 	"net/http"
 	"micky-svr/db"
+	"micky-svr/helper"
 	"encoding/json"
 	//"database/sql"
 	_ "github.com/lib/pq"
 )
 
 type Post struct {
-	Id                  int    `json:"id" xml:"id" form:"id" query:"id"`
-	Title               string `json:"title" xml:"title" form:"title" query:"title"`
-	Description         string `json:"description" xml:"description" form:"description" query:"description"`
+	Id                  int    		`json:"id" xml:"id" form:"id" query:"id"`
+	Title               string 		`json:"title" xml:"title" form:"title" query:"title"`
+	Description         string 		`json:"description" xml:"description" form:"description" query:"description"`
+	Session 			[]Session 	`json:"session" xml:"session" form:"session" query:"session"`
+}
+
+type Session struct {
+	Id 			int    			`json:"id" xml:"id" form:"id" query:"id"`
+	Content  	string 			`json:"content" xml:"content" form:"content" query:"content"`
+	PostId  	string 			`json:"post_id" xml:"post_id" form:"post_id" query:"post_id"`
 }
 var ctx = context.Background()
 
@@ -24,7 +32,7 @@ func GetPost(w http.ResponseWriter, r *http.Request){
 
 		if err != nil {
 			panic(err)
-			w.WriteHeader(http.StatusInternalServerError)
+			helper.FailRequest(&w, "false", http.StatusForbidden)
 			return
 		}
 
@@ -33,9 +41,8 @@ func GetPost(w http.ResponseWriter, r *http.Request){
 
 		rows, err := db.QueryContext(ctx, sqlQuery)
 		if err != nil {
-			fmt.Println("loi o day nef ============>")
 			panic(err)
-			w.WriteHeader(http.StatusInternalServerError)
+			helper.FailRequest(&w, "false", http.StatusInternalServerError)
 			return
 		}
 		posts := []Post{}
@@ -48,14 +55,12 @@ func GetPost(w http.ResponseWriter, r *http.Request){
 			)
 			posts = append(posts, post)
 		}
+
 		fmt.Println(posts)
 		js, err := json.Marshal(posts)
-		fmt.Println("err =>",err)
-		fmt.Println(js)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(js)
+		helper.WriteResponse(&w, js)
 		return
+
 	} else if r.Method == "POST" {
 		if err := r.ParseForm(); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -67,32 +72,30 @@ func GetPost(w http.ResponseWriter, r *http.Request){
 		db, err := sql.Open("postgres", db.DbInfo())
 		if err != nil {
 			panic(err)
-			w.WriteHeader(http.StatusInternalServerError)
+			helper.FailRequest(&w, "false", http.StatusInternalServerError)
 			return
 		}
 
 		defer db.Close()
 
-		sqlQuery := `
-			INSERT INTO mk_post (title, description)
-			VALUES ($1, $2);`
+		sqlQuery := `INSERT INTO mk_post (title, description) VALUES ($1, $2);`
 		_, err = db.Exec(sqlQuery, title, description)
 
 		if err != nil {
 			panic(err)
-			w.WriteHeader(http.StatusInternalServerError)
+			helper.FailRequest(&w, "false", http.StatusInternalServerError)
 			return
 		}
 
+		//sqlQueryPost = `SELECT id FROM mk_post WHERE title=$1 AND description=$2;`
+		//row = db.QueryRowContext(ctx, sqlQuery, username)
 		response := map[string]string{"status": "ok"}
 		js, _ := json.Marshal(response)
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(js)
+		helper.WriteResponse(&w, js)
 		return
 
 	} else {
+		helper.FailRequest(&w, "false", http.StatusInternalServerError)
 		return
 	}
 }
