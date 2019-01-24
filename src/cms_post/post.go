@@ -123,23 +123,16 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 
 		defer db.Close()
 
-		sqlQuery := `INSERT INTO mk_post (title, description) VALUES ($1, $2);`
-		_, err = db.Exec(sqlQuery, newPost.Title, newPost.Description)
-
-		if err != nil {
-			panic(err)
-			helper.SetResponse(&w, "false", http.StatusInternalServerError)
-			return
-		}
-
-		sqlQueryPost := `SELECT id FROM mk_post WHERE title=$1 AND description=$2 LIMIT 1;`
-		row := db.QueryRowContext(ctx, sqlQueryPost, newPost.Title, newPost.Description)
-
-		var id string
-		err = row.Scan(
-			&id,
+		sqlQuery := `INSERT INTO mk_post (title, description) VALUES ($1, $2) RETURNING *;`
+		insertRow := db.QueryRow(sqlQuery, newPost.Title, newPost.Description)
+    
+		insertPost := Post{}
+		err = insertRow.Scan(
+			&insertPost.Id,
+			&insertPost.Title,
+			&insertPost.Description,
 		)
-
+		fmt.Println(insertPost)
 		if err != nil {
 			panic(err)
 			helper.SetResponse(&w, "false", http.StatusInternalServerError)
@@ -149,7 +142,7 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 
 		if len(newPost.Session) > 0 {
 			for _, session := range newPost.Session {
-				_, err = db.Exec(sqlInsert, session.Content, id)
+				_, err = db.Exec(sqlInsert, session.Content, insertPost.Id)
 				if err != nil {
 					panic(err)
 					helper.SetResponse(&w, "false", http.StatusInternalServerError)
@@ -157,8 +150,22 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
+		
+		sqlSelectSession := `SELECT * FROM mk_session WHERE post_id=$1;`
+		sessionRows, err := db.QueryContext(ctx, sqlSelectSession, insertPost.Id)
+		sessions := []Session{}
+			for sessionRows.Next() {
+				session := Session{}
+				err = sessionRows.Scan(
+					&session.Id,
+					&session.Content,
+					&session.PostId,
+				)
+				sessions = append(sessions, session)
+			}
+			insertPost.Session = sessions
 
-		response := map[string]string{"status": "ok"}
+		response := map[string]Post{"status": insertPost}
 		js, _ := json.Marshal(response)
 		helper.WriteResponse(&w, js)
 		return
