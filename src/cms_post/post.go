@@ -3,28 +3,31 @@ package cms_post
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"micky-svr/db"
 	"micky-svr/helper"
-	"encoding/json"
-	_ "github.com/lib/pq"
+	"net/http"
+	"strconv"
+
 	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
 )
 
 type Post struct {
-	Id                  int    		`json:"id" xml:"id" form:"id" query:"id"`
-	Title               string 		`json:"title" xml:"title" form:"title" query:"title"`
-	Description         string 		`json:"description" xml:"description" form:"description" query:"description"`
-	Session 			[]Session 	`json:"session" xml:"session" form:"session" query:"session"`
+	Id          int       `json:"id" xml:"id" form:"id" query:"id"`
+	Title       string    `json:"title" xml:"title" form:"title" query:"title"`
+	Description string    `json:"description" xml:"description" form:"description" query:"description"`
+	Session     []Session `json:"session" xml:"session" form:"session" query:"session"`
 }
 
 type Session struct {
-	Id 			int    			`json:"id" xml:"id" form:"id" query:"id"`
-	Content  	string 			`json:"content" xml:"content" form:"content" query:"content"`
-	PostId  	string 			`json:"-" xml:"post_id" form:"post_id" query:"post_id"`
+	Id      int    `json:"id" xml:"id" form:"id" query:"id"`
+	Content string `json:"content" xml:"content" form:"content" query:"content"`
+	PostId  string `json:"-" xml:"post_id" form:"post_id" query:"post_id"`
 }
+
 var ctx = context.Background()
 
 func CheckJson(w http.ResponseWriter, r *http.Request) {
@@ -42,14 +45,12 @@ func CheckJson(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(newPost)
 }
 
-
-
-func GetPost(w http.ResponseWriter, r *http.Request){
+func GetPost(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		db, err := sql.Open("postgres", db.DbInfo())
 		if err != nil {
 			panic(err)
-			helper.FailRequest(&w, "false", http.StatusForbidden)
+			helper.SetResponse(&w, "false", http.StatusForbidden)
 			return
 		}
 
@@ -58,11 +59,12 @@ func GetPost(w http.ResponseWriter, r *http.Request){
 		postRows, err := db.QueryContext(ctx, sqlQuery)
 		if err != nil {
 			panic(err)
-			helper.FailRequest(&w, "false", http.StatusInternalServerError)
+			helper.SetResponse(&w, "false", http.StatusInternalServerError)
 			return
 		}
 
 		posts := []Post{}
+
 		for postRows.Next() {
 			post := Post{}
 			err = postRows.Scan(
@@ -75,7 +77,7 @@ func GetPost(w http.ResponseWriter, r *http.Request){
 			sessionRows, err := db.QueryContext(ctx, sqlQuerySession, post.Id)
 			if err != nil {
 				panic(err)
-				helper.FailRequest(&w,"false", http.StatusInternalServerError)
+				helper.SetResponse(&w, "false", http.StatusInternalServerError)
 				return
 			}
 
@@ -105,7 +107,6 @@ func GetPost(w http.ResponseWriter, r *http.Request){
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println("run code inside")
 		newPost := Post{}
 		err = json.Unmarshal(body, &newPost)
 		if err != nil {
@@ -116,7 +117,7 @@ func GetPost(w http.ResponseWriter, r *http.Request){
 
 		if err != nil {
 			panic(err)
-			helper.FailRequest(&w, "false", http.StatusInternalServerError)
+			helper.SetResponse(&w, "false", http.StatusInternalServerError)
 			return
 		}
 
@@ -127,7 +128,7 @@ func GetPost(w http.ResponseWriter, r *http.Request){
 
 		if err != nil {
 			panic(err)
-			helper.FailRequest(&w, "false", http.StatusInternalServerError)
+			helper.SetResponse(&w, "false", http.StatusInternalServerError)
 			return
 		}
 
@@ -141,22 +142,21 @@ func GetPost(w http.ResponseWriter, r *http.Request){
 
 		if err != nil {
 			panic(err)
-			helper.FailRequest(&w, "false", http.StatusInternalServerError)
+			helper.SetResponse(&w, "false", http.StatusInternalServerError)
 			return
 		}
 		sqlInsert := `INSERT INTO mk_session (content, post_id) VALUES ($1, $2);`
 
-		if len(newPost.Session) > 0{
+		if len(newPost.Session) > 0 {
 			for _, session := range newPost.Session {
 				_, err = db.Exec(sqlInsert, session.Content, id)
 				if err != nil {
 					panic(err)
-					helper.FailRequest(&w, "false", http.StatusInternalServerError)
+					helper.SetResponse(&w, "false", http.StatusInternalServerError)
 					return
 				}
 			}
 		}
-
 
 		response := map[string]string{"status": "ok"}
 		js, _ := json.Marshal(response)
@@ -164,26 +164,27 @@ func GetPost(w http.ResponseWriter, r *http.Request){
 		return
 
 	} else {
-		helper.FailRequest(&w, "false", http.StatusInternalServerError)
+		helper.SetResponse(&w, "false", http.StatusInternalServerError)
 		return
 	}
 }
 
 func SinglePost(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id := vars["id"]
+	id_string := vars["id"]
+	id, _ := strconv.Atoi(id_string)
 	if r.Method == "GET" {
 		db, err := sql.Open("postgres", db.DbInfo())
 
 		if err != nil {
 			panic(err)
-			helper.FailRequest(&w, "false", http.StatusForbidden)
+			helper.SetResponse(&w, "false", http.StatusForbidden)
 			return
 		}
 
 		queryPost := `SELECT * FROM mk_post WHERE id=$1;`
 
-		postRow := db.QueryRowContext(ctx,queryPost,id)
+		postRow := db.QueryRowContext(ctx, queryPost, id)
 		post := Post{}
 		err = postRow.Scan(
 			&post.Id,
@@ -193,16 +194,16 @@ func SinglePost(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			panic(err)
-			helper.FailRequest(&w, "false", http.StatusForbidden)
+			helper.SetResponse(&w, "false", http.StatusForbidden)
 			return
 		}
 
 		querySession := `SELECT * FROM mk_session WHERE post_id=$1;`
 
-		sessionRows, err := db.QueryContext(ctx,querySession,id)
+		sessionRows, err := db.QueryContext(ctx, querySession, id)
 		if err != nil {
 			panic(err)
-			helper.FailRequest(&w, "false", http.StatusForbidden)
+			helper.SetResponse(&w, "false", http.StatusForbidden)
 			return
 		}
 
@@ -228,20 +229,83 @@ func SinglePost(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			panic(err)
-			helper.FailRequest(&w, "false", http.StatusInternalServerError)
+			helper.SetResponse(&w, "false", http.StatusInternalServerError)
 			return
 		}
 
-		defer db.Close()
-
-		deletePostQuery := `DELETE FROM mk_post WHERE id=$1;`
-		_, err = db.Exec(deletePostQuery, id)
 		deleteSessionQuery := `DELETE FROM mk_session WHERE post_id=$1;`
 		_, err = db.Exec(deleteSessionQuery, id)
-
+		if err != nil {
+			panic(err)
+			helper.SetResponse(&w, "BadRequest", http.StatusBadRequest)
+			return
+		}
+		defer db.Close()
+		deletePostQuery := `DELETE FROM mk_post WHERE id=$1;`
+		_, err = db.Exec(deletePostQuery, id)
+		if err != nil {
+			panic(err)
+			helper.SetResponse(&w, "BadRequest", http.StatusBadRequest)
+			return
+		}
+		helper.SetResponse(&w, "Susscess", http.StatusOK)
 		return
-	} else if r.Method == "PUT" {
 
+	} else if r.Method == "PUT" {
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			panic(err)
+			helper.SetResponse(&w, "BadRequest", http.StatusBadRequest)
+			return
+		}
+
+		newPost := Post{}
+		err = json.Unmarshal(body, &newPost)
+
+		if err != nil {
+			panic(err)
+		}
+
+		if id != newPost.Id {
+			panic(err)
+			helper.SetResponse(&w, "BadRequest", http.StatusBadRequest)
+			return
+		}
+
+		db, err := sql.Open("postgres", db.DbInfo())
+
+		if err != nil {
+			panic(err)
+			helper.SetResponse(&w, "false", http.StatusInternalServerError)
+			return
+		}
+
+		updatePost := `UPDATE mk_post SET title=$1, description=$2 WHERE id=$3;`
+		_, err = db.Exec(updatePost, newPost.Title, newPost.Description, newPost.Id)
+
+		updateSession := `UPDATE mk_session SET content=$1 WHERE id=$2;`
+		insertSession := `INSERT INTO mk_session (content, post_id) VALUES  ($1,$2);`
+		if len(newPost.Session) > 0 {
+			for _, session := range newPost.Session {
+				if session.Id == 0 {
+					_, err = db.Exec(insertSession, session.Content, id)
+					if err != nil {
+						panic(err)
+						helper.SetResponse(&w, "false", http.StatusInternalServerError)
+					}
+				} else {
+					_, err = db.Exec(updateSession, session.Content, session.Id)
+					if err != nil {
+						panic(err)
+						helper.SetResponse(&w, "false", http.StatusInternalServerError)
+						return
+					}
+				}
+			}
+		}
+
+		helper.SetResponse(&w, "Susscess", http.StatusOK)
+		return
 	}
 
 	return

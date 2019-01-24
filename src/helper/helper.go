@@ -20,7 +20,7 @@ func Log(err error, w http.ResponseWriter) http.ResponseWriter {
 	return w
 }
 
-func FailRequest(w *http.ResponseWriter, message string, status int) {
+func SetResponse(w *http.ResponseWriter, message string, status int) {
 		response := map[string]string{"message": message}
 		js, _ := json.Marshal(response)
 		(*w).Header().Set("Content-Type", "application/json")

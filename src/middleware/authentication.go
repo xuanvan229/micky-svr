@@ -16,12 +16,12 @@ var ctx = context.Background()
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Do stuff here
-		fmt.Println(r.URL)
+		fmt.Println(r.Method,r.URL)
 		cookie, err := r.Cookie("_token")
 
 		if err != nil {
 			//panic(err)
-			helper.FailRequest(&w, "no token", http.StatusForbidden)
+			helper.SetResponse(&w, "no token", http.StatusForbidden)
 			return
 		}
 
@@ -32,7 +32,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 
 		if err != nil {
 			panic(err)
-			helper.FailRequest(&w, "false", http.StatusForbidden)
+			helper.SetResponse(&w, "false", http.StatusForbidden)
 			return
 		}
 
@@ -61,7 +61,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		helper.FailRequest(&w, "false", http.StatusForbidden)
+		helper.SetResponse(&w, "false", http.StatusForbidden)
 		return
 
 	})

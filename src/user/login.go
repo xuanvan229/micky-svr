@@ -167,7 +167,7 @@ func Check(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		//panic(err)
-		helper.FailRequest(&w, "no token", http.StatusForbidden)
+		helper.SetResponse(&w, "no token", http.StatusForbidden)
 		//response := map[string]string{"status": "no token"}
 		//js, _ := json.Marshal(response)
 		//w.Header().Set("Content-Type", "application/json")
@@ -183,7 +183,7 @@ func Check(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		panic(err)
-		helper.FailRequest(&w, "false", http.StatusForbidden)
+		helper.SetResponse(&w, "false", http.StatusForbidden)
 		return
 	}
 
@@ -215,6 +215,6 @@ func Check(w http.ResponseWriter, r *http.Request) {
 		w.Write(js)
 		return
 	}
-	helper.FailRequest(&w, "false", http.StatusForbidden)
+	helper.SetResponse(&w, "false", http.StatusForbidden)
 	return
 }
