@@ -238,6 +238,10 @@ func SinglePost(w http.ResponseWriter, r *http.Request) {
 		_, err = db.Exec(deletePostQuery, id)
 		deleteSessionQuery := `DELETE FROM mk_session WHERE post_id=$1;`
 		_, err = db.Exec(deleteSessionQuery, id)
+
+		return
+	} else if r.Method == "PUT" {
+
 	}
 
 	return
