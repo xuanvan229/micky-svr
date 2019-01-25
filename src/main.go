@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
 	"io"
+	"micky-svr/cms_post"
 	"micky-svr/middleware"
 	"micky-svr/user"
-	"micky-svr/cms_post"
 	"net/http"
+
+	"github.com/gorilla/mux"
+
 	// "encoding/json"
 	"log"
 	// "io/ioutil"
@@ -45,7 +47,7 @@ func main() {
 	p.Use(middleware.LoggingMiddleware)
 	p.HandleFunc("/", helloHandler)
 	p.HandleFunc("/hello", helloHandler)
-	p.HandleFunc("/post",cms_post.GetPost)
+	p.HandleFunc("/post", cms_post.GetPost)
 	p.HandleFunc("/post/{id}", cms_post.SinglePost)
 	fmt.Println("Sever run at :1323")
 	if err := http.ListenAndServe(":1323", r); err != nil {

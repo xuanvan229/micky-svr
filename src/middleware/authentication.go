@@ -4,11 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
 	"micky-svr/db"
 	"micky-svr/helper"
 	u "micky-svr/user"
 	"net/http"
+	"time"
+
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
 var ctx = context.Background()
@@ -16,9 +18,9 @@ var ctx = context.Background()
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Do stuff here
-		fmt.Println(r.Method,r.URL)
+		fmt.Println(r.Method, r.URL)
 		cookie, err := r.Cookie("_token")
-
+		startTime := time.Now()
 		if err != nil {
 			//panic(err)
 			helper.SetResponse(&w, "no token", http.StatusForbidden)
@@ -59,6 +61,8 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		if user.Username == userToken.Name && user.Pass == userToken.Pass {
 			// Call the next handler, which can be another middleware in the chain, or the final handler.
 			next.ServeHTTP(w, r)
+			duration := time.Now().Sub(startTime)
+			fmt.Println(duration)
 			return
 		}
 		helper.SetResponse(&w, "false", http.StatusForbidden)
