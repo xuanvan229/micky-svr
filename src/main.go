@@ -7,6 +7,7 @@ import (
 	"micky-svr/middleware"
 	"micky-svr/user"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -31,14 +32,17 @@ func loggingMiddleware(next http.Handler) http.Handler {
 
 func main() {
 	helloHandler := func(w http.ResponseWriter, req *http.Request) {
+		startTime := time.Now()
 		io.WriteString(w, "Hello, world!\n")
+		timerun := time.Now().Sub(startTime)
+		fmt.Println(timerun)
 	}
 
 	r := mux.NewRouter()
 	// Routes consist of a path and a handler function.
 	api := r.PathPrefix("/api/").Subrouter()
 
-	api.HandleFunc("/hi", helloHandler)
+	api.HandleFunc("/hi",  cms_post.GetPost)
 	api.HandleFunc("/login", user.Login).Methods("POST")
 	api.HandleFunc("/resgister", user.Register).Methods("POST")
 	api.HandleFunc("/check", user.Check).Methods("GET")

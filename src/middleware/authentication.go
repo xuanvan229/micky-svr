@@ -18,6 +18,7 @@ var ctx = context.Background()
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Do stuff here
+
 		fmt.Println(r.Method, r.URL)
 		cookie, err := r.Cookie("_token")
 		startTime := time.Now()
@@ -45,12 +46,11 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-
+		db.SetMaxOpenConns(5)
 		defer db.Close()
 		sqlQuery := `SELECT * FROM mk_user WHERE username=$1 LIMIT 1;`
 
 		row := db.QueryRowContext(ctx, sqlQuery, userToken.Name)
-
 		user := u.User{}
 		err = row.Scan(
 			&user.Id,
@@ -58,6 +58,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 			&user.Pass,
 		)
 
+		fmt.Println("before go to main func =>", time.Now().Sub(startTime))
 		if user.Username == userToken.Name && user.Pass == userToken.Pass {
 			// Call the next handler, which can be another middleware in the chain, or the final handler.
 			next.ServeHTTP(w, r)

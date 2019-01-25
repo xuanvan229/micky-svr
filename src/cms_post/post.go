@@ -10,6 +10,7 @@ import (
 	"micky-svr/helper"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -25,7 +26,7 @@ type Post struct {
 type Session struct {
 	Id      int    `json:"id" xml:"id" form:"id" query:"id"`
 	Content string `json:"content" xml:"content" form:"content" query:"content"`
-	PostId  string `json:"-" xml:"post_id" form:"post_id" query:"post_id"`
+	PostId  int `json:"-" xml:"post_id" form:"post_id" query:"post_id"`
 }
 
 var ctx = context.Background()
@@ -53,7 +54,8 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 			helper.SetResponse(&w, "false", http.StatusForbidden)
 			return
 		}
-
+		startTime := time.Now()
+		db.SetMaxOpenConns(5)
 		sqlQuery := `SELECT * FROM mk_post;`
 
 		postRows, err := db.QueryContext(ctx, sqlQuery)
@@ -63,8 +65,31 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		fmt.Println("get all post without session", time.Now().Sub(startTime))
+
 		posts := []Post{}
 
+		sqlQuerySession := `SELECT * FROM mk_session;`
+
+		sesssionsRows, err := db.QueryContext(ctx, sqlQuerySession)
+		if err != nil {
+			panic(err)
+			helper.SetResponse(&w, "false", http.StatusInternalServerError)
+			return
+		}
+
+		sessions := []Session{}
+		for sesssionsRows.Next() {
+			session := Session{}
+			err = sesssionsRows.Scan(
+				&session.Id,
+				&session.Content,
+				&session.PostId,
+			)
+			sessions = append(sessions, session)
+		}
+
+		beforeFor := time.Now()
 		for postRows.Next() {
 			post := Post{}
 			err = postRows.Scan(
@@ -73,33 +98,44 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 				&post.Description,
 			)
 
-			sqlQuerySession := `SELECT * FROM mk_session WHERE post_id=$1;`
-			sessionRows, err := db.QueryContext(ctx, sqlQuerySession, post.Id)
-			if err != nil {
-				panic(err)
-				helper.SetResponse(&w, "false", http.StatusInternalServerError)
-				return
+			for _, item := range sessions {
+				//_, err = db.Exec(sqlInsert, session.Content, insertPost.Id)
+				//post.Description
+				if item.PostId == post.Id {
+					post.Session = append(post.Session, item)
+				}
 			}
 
-			sessions := []Session{}
-			for sessionRows.Next() {
-				session := Session{}
-				err = sessionRows.Scan(
-					&session.Id,
-					&session.Content,
-					&session.PostId,
-				)
-				sessions = append(sessions, session)
-			}
-			post.Session = sessions
+			//sqlQuerySession := `SELECT * FROM mk_session WHERE post_id=$1;`
+			//sessionRows, err := db.QueryContext(ctx, sqlQuerySession, post.Id)
+			//if err != nil {
+			//	panic(err)
+			//	helper.SetResponse(&w, "false", http.StatusInternalServerError)
+			//	return
+			//}
+
+			//sessions := []Session{}
+			//for sessionRows.Next() {
+			//	session := Session{}
+			//	err = sessionRows.Scan(
+			//		&session.Id,
+			//		&session.Content,
+			//		&session.PostId,
+			//	)
+			//	sessions = append(sessions, session)
+			//}
+			fmt.Println("get all post inside session", time.Now().Sub(beforeFor))
+			//post.Session = sessions
 			posts = append(posts, post)
 		}
 
+		fmt.Println("get all post", time.Now().Sub(startTime))
 		db.Close()
 
 		response := map[string][]Post{"data": posts}
 		js, err := json.Marshal(response)
 		helper.WriteResponse(&w, js)
+		fmt.Println("before return data", time.Now().Sub(startTime))
 		return
 
 	} else if r.Method == "POST" {
@@ -125,7 +161,7 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 
 		sqlQuery := `INSERT INTO mk_post (title, description) VALUES ($1, $2) RETURNING *;`
 		insertRow := db.QueryRow(sqlQuery, newPost.Title, newPost.Description)
-    
+
 		insertPost := Post{}
 		err = insertRow.Scan(
 			&insertPost.Id,
@@ -150,22 +186,22 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
-		
+
 		sqlSelectSession := `SELECT * FROM mk_session WHERE post_id=$1;`
 		sessionRows, err := db.QueryContext(ctx, sqlSelectSession, insertPost.Id)
 		sessions := []Session{}
-			for sessionRows.Next() {
-				session := Session{}
-				err = sessionRows.Scan(
-					&session.Id,
-					&session.Content,
-					&session.PostId,
-				)
-				sessions = append(sessions, session)
-			}
-			insertPost.Session = sessions
+		for sessionRows.Next() {
+			session := Session{}
+			err = sessionRows.Scan(
+				&session.Id,
+				&session.Content,
+				&session.PostId,
+			)
+			sessions = append(sessions, session)
+		}
+		insertPost.Session = sessions
 
-		response := map[string]Post{"status": insertPost}
+		response := map[string]Post{"data": insertPost}
 		js, _ := json.Marshal(response)
 		helper.WriteResponse(&w, js)
 		return
