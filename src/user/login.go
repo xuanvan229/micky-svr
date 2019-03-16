@@ -7,6 +7,7 @@ import (
 	"micky-svr/helper"
 	"net/http"
 	"time"
+	"io/ioutil"
 	// "gopkg.in/mgo.v2/bson"
 	"context"
 	"database/sql"
@@ -22,6 +23,11 @@ type JwtCustomClaims struct {
 	Name string `json:"name"`
 	Pass string `json:"pass"`
 	jwt.StandardClaims
+}
+
+type LoginInfo struct {
+	Username string `json:"username"  xml:"username" form:"username" query:"username"`
+	Password     string `json:"password" xml:"password" form:"password" query:"password"`
 }
 
 type User struct {
@@ -53,14 +59,25 @@ func comparePasswords(hashedPwd string, plainPwd []byte) bool {
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
+	// fmt.Println("login")
+	// if err := r.ParseForm(); err != nil {
+	// 	w.WriteHeader(http.StatusBadRequest)
+	// 	return
+	// }
 
-	if err := r.ParseForm(); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+	// username := r.FormValue("username")
+	// password := r.FormValue("password")
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		panic(err)
+	}
+	loginInfo := LoginInfo{}
+	err = json.Unmarshal(body, &loginInfo)
+	if err != nil {
+		panic(err)
 	}
 
-	username := r.FormValue("username")
-	password := r.FormValue("password")
+
 
 	db, err := sql.Open("postgres", db.DbInfo())
 
@@ -73,7 +90,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 	sqlQuery := `SELECT * FROM mk_user WHERE username=$1 LIMIT 1;`
 
-	row := db.QueryRowContext(ctx, sqlQuery, username)
+	row := db.QueryRowContext(ctx, sqlQuery, loginInfo.Username)
 
 	user := User{}
 	err = row.Scan(
@@ -87,7 +104,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if comparePasswords(user.Pass, []byte(password)) {
+	if comparePasswords(user.Pass, []byte(loginInfo.Password)) {
 		fmt.Println("true")
 		claims := &JwtCustomClaims{
 			user.Username,

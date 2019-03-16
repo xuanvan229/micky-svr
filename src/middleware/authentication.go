@@ -9,16 +9,24 @@ import (
 	u "micky-svr/user"
 	"net/http"
 	"time"
-
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
 var ctx = context.Background()
-
+func EnableCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Access-Control-Allow-Methods:", "GET, POST")
+		w.Header().Set("Access-Control-Allow-Headers: Content-Type", "*")
+		fmt.Println("go go ")
+		next.ServeHTTP(w, r)
+		return 
+	}) 
+}
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Do stuff here
-
 		fmt.Println(r.Method, r.URL)
 		cookie, err := r.Cookie("_token")
 		startTime := time.Now()
@@ -58,7 +66,6 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 			&user.Pass,
 		)
 
-		fmt.Println("before go to main func =>", time.Now().Sub(startTime))
 		if user.Username == userToken.Name && user.Pass == userToken.Pass {
 			// Call the next handler, which can be another middleware in the chain, or the final handler.
 			next.ServeHTTP(w, r)

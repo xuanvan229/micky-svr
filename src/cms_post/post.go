@@ -90,6 +90,7 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 		}
 
 		beforeFor := time.Now()
+    
 		for postRows.Next() {
 			post := Post{}
 			err = postRows.Scan(
