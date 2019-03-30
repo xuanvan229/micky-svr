@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	host     =  "posgres_micky"
+	host     =  "localhost"
 	port     =  5432
 	user     =  "postgres"
 	password =  "k8kwQ8f4A2fjZk3QhyebekRYKK"

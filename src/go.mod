@@ -12,7 +12,8 @@ require (
 	github.com/mattn/go-isatty v0.0.6 // indirect
 	github.com/ugorji/go/codec v0.0.0-20190204201341-e444a5086c43 // indirect
 	golang.org/x/crypto v0.0.0-20190103213133-ff983b9c42bc
-	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
+	gopkg.in/gin-gonic/gin.v1 v1.3.0
+	gopkg.in/go-playground/validator.v8 v8.18.2
 	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce
 	gopkg.in/yaml.v2 v2.2.2 // indirect
 )

@@ -31,6 +31,12 @@ func AuthRequired() gin.HandlerFunc {
 	}
 }
 
+func AuthRequired1() gin.HandlerFunc {
+	return func( c *gin.Context ) {
+		fmt.Println("middle ware 1")
+	}
+}
+
 func (app *App) setRouters() {
 	app.Router.Use(gin.Logger())
 	app.Router.Use(gin.Recovery())
@@ -48,6 +54,10 @@ func (app *App) setRouters() {
 			c.JSON(200, response)
 		})
 		api.GET("/page",page.CreatePage)
-		api.POST("/user",user.CreateUser)
+	
+		// api.POST("/user",user.CreateUser)
 	}
+	u := api.Group("/user")
+	u.Use(AuthRequired1())
+	user.UserRegister(u)
 }
