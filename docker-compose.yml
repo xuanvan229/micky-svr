@@ -1,35 +1,22 @@
 version: '3'
 volumes: 
-    micky_data:
+    postgres_data:
 services:
-  mickyapp:
-    image: "micky-svr"
-    ports:
-        - "8082:8081" # webserver_port
-        - "1323:1323"
-    volumes: 
-        - ./src:/app
-    depends_on:
-        - 'posgres_micky'
-    links:
-        - 'posgres_micky'
-    depends_on:
-        - posgres_micky
-  posgres_micky: 
+  posgresdb: 
     image: 'postgres:11'
     restart: always
     environment:
         - POSTGRES_PASSWORD=k8kwQ8f4A2fjZk3QhyebekRYKK
         - POSTGRES_DB=micky
     volumes: 
-        - micky_data:/var/lib/postgresql/data
+        - postgres_data:/var/lib/postgresql/data
     ports:
         - 5432:5432
     container_name: postgres
 #   mongo_micky:
 #     image: 'mongo:latest'
 #     volumes:
-#         - micky_data:/data/db
+#         - postgres_data:/data/db
 #     environment:
 #         MONGO_INITDB_ROOT_USERNAME: micky
 #         MONGO_INITDB_ROOT_PASSWORD: k8kwQ8f4A2fjZk3QhyebekRYKK
@@ -43,14 +30,14 @@ services:
     logging:
         driver: none
     volumes:
-        - micky_data:/var/lib/postgresql/data
+        - postgres_data:/var/lib/postgresql/data
     command: ["tar", "-C", "/var/lib/postgresql/data", "--exclude='logs/*'", "-cjf", "-", "./"]
-    container_name: micky_data_backup
+    container_name: postgres_data_backup
   restore-db:
     image: alpine
     stdin_open: true
     tty: true
     volumes:
-        - micky_data:/var/lib/postgresql/data
+        - postgres_data:/var/lib/postgresql/data
     command: ["tar", "-C", "/var/lib/postgresql/data", "-xj"]
-    container_name: micky_data_backup
+    container_name: postgres_data_backup
