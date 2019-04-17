@@ -3,7 +3,6 @@ package user
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	//"errors"
 	"micky-svr/common"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"

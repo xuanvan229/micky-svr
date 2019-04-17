@@ -5,6 +5,7 @@ import (
 	// "encoding/json"
 	"fmt"
 	"micky-svr/config"
+	"micky-svr/middleware"
 	"micky-svr/resource/page"
 	"micky-svr/resource/user"
 	"github.com/gin-gonic/gin"
@@ -40,11 +41,12 @@ func AuthRequired1() gin.HandlerFunc {
 func (app *App) setRouters() {
 	app.Router.Use(gin.Logger())
 	app.Router.Use(gin.Recovery())
-
 	api := app.Router.Group("/api")
-	api.Use(AuthRequired())
+	api.GET("/hi", middleware.CheckLogin)
+	obj := api.Group("/obj")
+	obj.Use(middleware.AuthorizationMiddleware())
 	{
-		api.GET("/login", func(c *gin.Context ){
+		obj.GET("/login", func(c *gin.Context ){
 			db, err := config.Connect()
 			if err != nil {
 				fmt.Println("Cant not connect db", err)
@@ -53,7 +55,7 @@ func (app *App) setRouters() {
 			response := map[string]string{"status": "ok"}
 			c.JSON(200, response)
 		})
-		api.GET("/page",page.CreatePage)
+		obj.GET("/page",page.CreatePage)
 	
 		// api.POST("/user",user.CreateUser)
 	}

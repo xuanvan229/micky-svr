@@ -6,6 +6,11 @@ import (
 	"fmt"
 	"micky-svr/db"
 	"micky-svr/helper"
+	"github.com/gin-gonic/gin"
+	"micky-svr/common"
+	"micky-svr/config"
+	"micky-svr/resource/user"
+	"errors"
 	u "micky-svr/user"
 	"net/http"
 	"time"
@@ -77,4 +82,92 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		return
 
 	})
+}
+
+func AuthorizationMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		cookie, err := c.Cookie("_token")
+		if err != nil {
+			fmt.Println(err)
+			c.JSON(404, map[string]string{"status": "not ok 123"})
+			c.Abort()
+			return 
+		}
+		
+		userToken := user.JwtCustomClaims{}
+		_, err = jwt.ParseWithClaims(cookie, &userToken, func(token *jwt.Token) (interface{}, error) {
+			return []byte("secret"), nil
+		})
+	
+		if err != nil {
+			c.JSON(404, map[string]string{"status": "not ok 1234"})
+			c.Abort()
+			return
+		}
+	
+		userInfo := user.UserModel{}
+	
+		userInfo.Username = userToken.Username
+		userInfo.Password = userToken.Password
+	
+		db, err := config.Connect()
+		if err != nil {
+			c.JSON(503, common.ResError("user", err))
+			c.Abort()
+			return
+		}
+		defer db.Close()
+		_, isExist := user.IsExist(userInfo, db)
+		if !isExist {
+			c.JSON(503, common.ResError("user", errors.New("Use does not exist")))
+			c.Abort()
+			return
+		} else {
+			fmt.Println("the code running to here")
+			c.Next()
+		}
+		return 
+		// fmt.Println(cookie)
+		// c.JSON(200, map[string]string{"status": "ok"}) 
+	
+	}
+}
+
+
+func CheckLogin(c *gin.Context) {
+	cookie, err := c.Cookie("_token")
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(404, map[string]string{"status": "not ok"})
+		return 
+	}
+
+	userToken := user.JwtCustomClaims{}
+	_, err = jwt.ParseWithClaims(cookie, &userToken, func(token *jwt.Token) (interface{}, error) {
+		return []byte("secret"), nil
+	})
+
+	if err != nil {
+		c.JSON(404, map[string]string{"status": "not ok"})
+		return
+	}
+
+	userInfo := user.UserModel{}
+
+	userInfo.Username = userToken.Username
+	userInfo.Password = userToken.Password
+
+	db, err := config.Connect()
+	if err != nil {
+		c.JSON(503, common.ResError("user", err))
+		return
+	}
+	defer db.Close()
+	_, isExist := user.IsExist(userInfo, db)
+	if !isExist {
+		c.JSON(503, common.ResError("user", errors.New("Use does not exist")))
+		return
+	}
+	// fmt.Println(cookie)
+	c.JSON(200, map[string]string{"status": "ok"}) 
 }

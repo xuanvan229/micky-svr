@@ -2,15 +2,14 @@ package user
 
 import (
 	"fmt"
-	//"fmt"
 	"github.com/gin-gonic/gin"
 	"micky-svr/config"
 	"micky-svr/common"
 	"errors"
-	//"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
-	//"time"
 )
+
+
 func UserRegister(router *gin.RouterGroup) {
 	router.POST("/register", Register)
 	router.POST("/login", Login)
@@ -51,14 +50,15 @@ func Login(c *gin.Context) {
 		c.JSON(503, common.ResError("login", err))
 		return
 	}
-	fmt.Println(userModelValidator.User.Password)
-	fmt.Println(userModelValidator.UserModel.Password)
+
+	fmt.Print(userModelValidator)
 
 	db, err := config.Connect()
 	if err != nil {
 		c.JSON(503, common.ResError("user", err))
 		return
 	}
+	
 	user, isExist := IsExist(userModelValidator.UserModel, db)
 
 	if !isExist {
@@ -72,7 +72,8 @@ func Login(c *gin.Context) {
 		if err != nil {
 			c.JSON(503, common.ResError("login", err))
 		}
-		c.SetCookie("_token", token, 3600, "/", "localhost", false, true)
+		// fmt.Println("token", token)
+		c.SetCookie("_token", token, 3600, "/", "micky.com", false, true)
 		c.JSON(200, map[string]string{"status": "ok"})
 		return
 	}
