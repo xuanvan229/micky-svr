@@ -29,8 +29,6 @@ func (self *UserModelValidator) Bind(c *gin.Context) error {
 	return nil
 }
 
-
-
 func IsExist(user UserModel, db *gorm.DB) (UserModel, bool) {
 	u := UserModel{}
 	db.Where("username = ?", user.Username).First(&u)

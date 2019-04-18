@@ -43,6 +43,7 @@ func (app *App) setRouters() {
 	app.Router.Use(gin.Logger())
 	app.Router.Use(gin.Recovery())
 	api := app.Router.Group("/api")
+	api.Use(middleware.CORSMiddleware())
 	api.GET("/hi", middleware.CheckLogin)
 	obj := api.Group("/obj")
 	obj.Use(middleware.AuthorizationMiddleware())

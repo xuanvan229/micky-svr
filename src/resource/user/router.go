@@ -73,7 +73,7 @@ func Login(c *gin.Context) {
 			c.JSON(503, common.ResError("login", err))
 		}
 		// fmt.Println("token", token)
-		c.SetCookie("_token", token, 3600, "/", "micky.com", false, true)
+		c.SetCookie("_token", token, 3600, "/", "", false, true)
 		c.JSON(200, map[string]string{"status": "ok"})
 		return
 	}

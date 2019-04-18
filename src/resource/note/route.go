@@ -12,7 +12,16 @@ func RegisterRoute(router *gin.RouterGroup) {
 }
 
 func GetNote(c *gin.Context) {
-	
+	notes := []NoteModel{}
+	db, err := config.Connect()
+	if err != nil {
+		c.JSON(503, common.ResError("user", err))
+		return
+	}
+	defer db.Close()
+	db.Find(&notes)
+	c.JSON(200, notes)
+	return
 }
 
 func PostNote(c *gin.Context) {
