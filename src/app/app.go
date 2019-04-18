@@ -4,10 +4,11 @@ import (
 	// "github.com/gorilla/mux"
 	// "encoding/json"
 	"fmt"
-	"micky-svr/config"
+	// "micky-svr/config"
 	"micky-svr/middleware"
-	"micky-svr/resource/page"
+	// "micky-svr/resource/page"
 	"micky-svr/resource/user"
+	"micky-svr/resource/note"
 	"github.com/gin-gonic/gin"
 )
 type App struct {
@@ -45,20 +46,21 @@ func (app *App) setRouters() {
 	api.GET("/hi", middleware.CheckLogin)
 	obj := api.Group("/obj")
 	obj.Use(middleware.AuthorizationMiddleware())
-	{
-		obj.GET("/login", func(c *gin.Context ){
-			db, err := config.Connect()
-			if err != nil {
-				fmt.Println("Cant not connect db", err)
-			}
-			fmt.Println("connect", db)
-			response := map[string]string{"status": "ok"}
-			c.JSON(200, response)
-		})
-		obj.GET("/page",page.CreatePage)
+	note.RegisterRoute(obj)
+	// {
+	// 	obj.GET("/login", func(c *gin.Context ){
+	// 		db, err := config.Connect()
+	// 		if err != nil {
+	// 			fmt.Println("Cant not connect db", err)
+	// 		}
+	// 		fmt.Println("connect", db)
+	// 		response := map[string]string{"status": "ok"}
+	// 		c.JSON(200, response)
+	// 	})
+	// 	obj.GET("/page",page.CreatePage)
 	
-		// api.POST("/user",user.CreateUser)
-	}
+	// 	// api.POST("/user",user.CreateUser)
+	// }
 	u := api.Group("/user")
 	u.Use(AuthRequired1())
 	user.UserRegister(u)

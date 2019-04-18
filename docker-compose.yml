@@ -13,16 +13,6 @@ services:
     ports:
         - 5432:5432
     container_name: postgres
-#   mongo_micky:
-#     image: 'mongo:latest'
-#     volumes:
-#         - postgres_data:/data/db
-#     environment:
-#         MONGO_INITDB_ROOT_USERNAME: micky
-#         MONGO_INITDB_ROOT_PASSWORD: k8kwQ8f4A2fjZk3QhyebekRYKK
-#     container_name: 'mongo_micky'
-#     ports:
-#         - '27022:27017'
   backup-db:
     image: alpine
     stdin_open: true

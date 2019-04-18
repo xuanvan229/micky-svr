@@ -116,14 +116,16 @@ func AuthorizationMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+		
 		defer db.Close()
+		
 		_, isExist := user.IsExist(userInfo, db)
 		if !isExist {
 			c.JSON(503, common.ResError("user", errors.New("Use does not exist")))
 			c.Abort()
 			return
 		} else {
-			fmt.Println("the code running to here")
+			c.Set("username", userInfo.Username)
 			c.Next()
 		}
 		return 
