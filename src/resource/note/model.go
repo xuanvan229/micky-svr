@@ -1,15 +1,14 @@
 package note
 
 import (
-	"time"
 	"micky-svr/resource/user"
 	"github.com/jinzhu/gorm"
 )
 
 type NoteModel struct {
-	ID uint
-	CreateAt time.Time
-	UserID uint
+	ID uint `json:"id"`
+	CreateAt int64 `json:"created"`
+	UserID uint `json:"-" `
 	User user.UserModel `json:"-" gorm:"foreignkey:UserID" `
 	Title string `json:"title"`
 	Content string `json:"content"`
