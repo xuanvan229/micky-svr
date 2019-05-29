@@ -22,3 +22,6 @@ backup:
 
 restore:
 	psql -h 'localhost' -U 'postgres' -d micky -1 -f db.sql
+
+run:
+	cd src && modd

@@ -29,7 +29,6 @@ func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 			c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 			c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-			// c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
 			c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 			c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
 			if c.Request.Method == "OPTIONS" {
@@ -88,9 +87,6 @@ func AuthorizationMiddleware() gin.HandlerFunc {
 			c.Next()
 		}
 		return 
-		// fmt.Println(cookie)
-		// c.JSON(200, map[string]string{"status": "ok"}) 
-	
 	}
 }
 
@@ -129,6 +125,5 @@ func CheckLogin(c *gin.Context) {
 		c.JSON(503, common.ResError("user", errors.New("Use does not exist")))
 		return
 	}
-	// fmt.Println(cookie)
 	c.JSON(200, map[string]string{"status": "ok"}) 
 }
