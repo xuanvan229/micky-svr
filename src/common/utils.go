@@ -1,9 +1,12 @@
 package common
 
 import (
+	"micky-svr/config"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 )
+
 type CommonError struct {
 	Errors map[string]interface{} `json:"errors"`
 }
@@ -18,4 +21,14 @@ func ResError(key string, err error) CommonError {
 	res.Errors = make(map[string]interface{})
 	res.Errors[key] = err.Error()
 	return res
+}
+
+func QueryList(resource interface{}, c *gin.Context) (interface{}, error) {
+	db, err := config.Connect()
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+	db.Find(resource)
+	return resource, nil
 }

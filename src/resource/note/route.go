@@ -1,9 +1,10 @@
 package note
 
 import (
-	"github.com/gin-gonic/gin"
 	"micky-svr/common"
 	"micky-svr/config"
+
+	"github.com/gin-gonic/gin"
 )
 
 func RegisterRoute(router *gin.RouterGroup) {
@@ -13,16 +14,13 @@ func RegisterRoute(router *gin.RouterGroup) {
 }
 
 func GetNote(c *gin.Context) {
-	notes := []NoteModel{}
-	db, err := config.Connect()
+	listnote, err := common.QueryList(&[]NoteModel{}, c)
 	if err != nil {
 		c.JSON(503, common.ResError("user", err))
 		return
 	}
-	defer db.Close()
-	db.Find(&notes)
-	c.JSON(200, notes)
-	return
+
+	c.JSON(200, listnote)
 }
 
 func GetItem(c *gin.Context) {
@@ -53,7 +51,6 @@ func PostNote(c *gin.Context) {
 		c.JSON(503, common.ResError("user", err))
 		return
 	}
-
 	db.Create(&noteModelValidator.NoteModel)
 	c.JSON(200, noteModelValidator.NoteModel)
 	return
